@@ -174,7 +174,7 @@ void RvoxxEditor::resized()
         return;
     }
     gate.setBounds(rect(31, 115, 88, 251)); comp.setBounds(rect(171, 132, 137, 237)); gain.setBounds(rect(359, 115, 88, 251));
-    reductionHold.setBounds(rect(195, 374, 88, 26)); leftHold.setBounds(rect(350, 398, 58, 24)); rightHold.setBounds(rect(410, 398, 58, 24));
+    reductionHold.setBounds(rect(195, 374, 88, 26)); leftHold.setBounds(rect(processor.getTotalNumOutputChannels() == 1 ? 375 : 350, 398, 58, 24)); rightHold.setBounds(rect(410, 398, 58, 24));
 }
 void RvoxxEditor::paint(juce::Graphics& g)
 {
@@ -187,7 +187,7 @@ void RvoxxEditor::paint(juce::Graphics& g)
     g.setColour(juce::Colour(0xff222222)); g.fillRect(0, 0, 475, 36);
     g.setColour(juce::Colour(0xff333333)); g.drawRect(1.0f, 37.0f, 473.0f, designHeight() - 38, 1.0f);
     const auto label = [&g, text](const juce::String& s, int x, int y, int w, int h, float size)
-    { g.setColour(text); g.setFont(size); g.drawText(s, x, y, w, h, juce::Justification::centred); };
+    { g.setColour(text); g.setFont(juce::Font(juce::FontOptions(size))); g.drawText(s, x, y, w, h, juce::Justification::centred); };
     if (artwork.isValid())
     {
         g.drawImageWithin(artwork, 0, 40, 475, 412, juce::RectanglePlacement::centred);
@@ -200,7 +200,7 @@ void RvoxxEditor::paint(juce::Graphics& g)
     g.setColour(text);
     g.setFont(juce::Font(juce::FontOptions(juce::Font::getDefaultSerifFontName(), 30, juce::Font::italic)));
     g.drawText("R", 195, 48, 34, 35, juce::Justification::centred);
-    g.setColour(juce::Colour(0xff9e191d)); g.setFont(25.0f);
+    g.setColour(juce::Colour(0xff9e191d)); g.setFont(juce::Font(juce::FontOptions(25.0f)));
     g.drawText("VOX", 226, 52, 61, 30, juce::Justification::centredLeft);
     g.setColour(juce::Colours::black.withAlpha(0.13f)); g.fillRoundedRectangle(137, 105, 207, 304, 54);
     g.setGradientFill(juce::ColourGradient(dark ? juce::Colour(0xff575757) : juce::Colour(0xffd8d7d1), 136, 98,
