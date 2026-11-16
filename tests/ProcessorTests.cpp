@@ -3,7 +3,7 @@
 #include <cstdlib>
 static void check(bool ok, const char* what)
 { if (!ok) { std::cerr << "FAIL: " << what << '\n'; std::exit(1); } }
-int main()
+int main(int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI init;
     RvoxxProcessor p;
@@ -37,5 +37,31 @@ int main()
     unsupported.inputBuses.set(0, juce::AudioChannelSet::create5point1());
     unsupported.outputBuses.set(0, juce::AudioChannelSet::create5point1());
     check(!restored.isBusesLayoutSupported(unsupported), "surround bus rejected");
-    std::cout << "PASS: processor automation, state, buses, limiter and meters\n";
+    {
+        std::unique_ptr<juce::AudioProcessorEditor> editor(restored.createEditor());
+        check(editor != nullptr && editor->getWidth() == 475 && editor->getHeight() >= 452, "editor opens at supported size");
+        int sliders = 0;
+        bool imageButton = false;
+        for (auto* child : editor->getChildren())
+        {
+            if (auto* slider = dynamic_cast<juce::Slider*>(child))
+            {
+                ++sliders;
+                if (slider->getName() == "Gate") slider->setValue(-40, juce::sendNotificationSync);
+                if (slider->getName() == "Compression") slider->setValue(-12, juce::sendNotificationSync);
+            }
+            if (auto* button = dynamic_cast<juce::TextButton*>(child)) imageButton |= button->getButtonText() == "Imagem";
+        }
+        check(sliders == 3 && imageButton, "three live controls and original image loader present");
+        check(std::abs(restored.readParameters().gate + 40) < 1e-4f && std::abs(restored.readParameters().compression + 12) < 1e-4f,
+            "editor controls update DSP parameters");
+        const auto snapshot = editor->createComponentSnapshot(editor->getLocalBounds());
+        check(snapshot.isValid(), "editor renders successfully");
+        if (argc > 1)
+        {
+            juce::FileOutputStream output{juce::File(argv[1])};
+            check(output.openedOk() && juce::PNGImageFormat().writeImageToStream(snapshot, output), "editor snapshot written");
+        }
+    }
+    std::cout << "PASS: processor automation, state, buses, limiter, meters and editor\n";
 }
