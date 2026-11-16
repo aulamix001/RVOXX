@@ -13,6 +13,18 @@ RvoxxLook::RvoxxLook()
     setColour(juce::ComboBox::textColourId, juce::Colour(0xffdddddd));
     setColour(juce::Slider::thumbColourId, juce::Colour(0xffffa500));
 }
+juce::Label* RvoxxLook::createSliderTextBox(juce::Slider& slider)
+{
+    auto* label = juce::LookAndFeel_V4::createSliderTextBox(slider);
+    if (slider.getName() == "Compression")
+    {
+        // The value sits over the thumb: send drags to the slider, while the
+        // child text editor can still receive clicks after a double-click.
+        label->setInterceptsMouseClicks(false, true);
+        label->setFont(18.0f);
+    }
+    return label;
+}
 juce::Slider::SliderLayout RvoxxLook::getSliderLayout(juce::Slider& slider)
 {
     if (slider.getSliderStyle() != juce::Slider::LinearVertical)

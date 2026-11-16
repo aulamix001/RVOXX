@@ -5,10 +5,16 @@ class RvoxxLook final : public juce::LookAndFeel_V4
 {
 public:
     RvoxxLook();
+    juce::Label* createSliderTextBox(juce::Slider&) override;
     juce::Slider::SliderLayout getSliderLayout(juce::Slider&) override;
     void drawButtonBackground(juce::Graphics&, juce::Button&, const juce::Colour&, bool, bool) override;
     void drawLinearSlider(juce::Graphics&, int, int, int, int, float, float, float,
         juce::Slider::SliderStyle, juce::Slider&) override;
+};
+class RvoxxCompSlider final : public juce::Slider
+{
+public:
+    void mouseDoubleClick(const juce::MouseEvent&) override { showTextBox(); }
 };
 class RvoxxEditor final : public juce::AudioProcessorEditor, private juce::Timer
 {
@@ -29,7 +35,8 @@ private:
     float designHeight() const { return artwork.isValid() ? 630.0f : 452.0f; }
     RvoxxProcessor& processor;
     RvoxxLook look;
-    juce::Slider gate, comp, gain;
+    juce::Slider gate, gain;
+    RvoxxCompSlider comp;
     using Attachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     std::unique_ptr<Attachment> gateAttachment, compAttachment, gainAttachment;
     juce::TextButton undo { "Undo" }, redo { "Redo" }, ab { "A/B" }, save { "Save" }, load { "Load" };
