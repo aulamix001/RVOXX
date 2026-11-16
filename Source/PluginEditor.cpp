@@ -21,7 +21,7 @@ juce::Label* RvoxxLook::createSliderTextBox(juce::Slider& slider)
         // The value sits over the thumb: send drags to the slider, while the
         // child text editor can still receive clicks after a double-click.
         label->setInterceptsMouseClicks(false, true);
-        label->setFont(18.0f);
+        label->setFont(juce::Font(juce::FontOptions(18.0f)));
     }
     return label;
 }
@@ -85,7 +85,7 @@ void RvoxxLook::drawLinearSlider(juce::Graphics& g, int x, int y, int width, int
 RvoxxEditor::RvoxxEditor(RvoxxProcessor& p) : AudioProcessorEditor(p), processor(p)
 {
     setLookAndFeel(&look);
-    for (auto* s : { &gate, &comp, &gain })
+    for (auto* s : { static_cast<juce::Slider*>(&gate), static_cast<juce::Slider*>(&comp), static_cast<juce::Slider*>(&gain) })
     {
         addAndMakeVisible(*s);
         s->setSliderStyle(juce::Slider::LinearVertical);
@@ -256,7 +256,7 @@ void RvoxxEditor::timerCallback()
     rightHold.setVisible(processor.getTotalNumOutputChannels() == 2);
     undo.setEnabled(processor.undo.canUndo()); redo.setEnabled(processor.undo.canRedo());
     const bool dark = skin.getSelectedId() == 2;
-    for (auto* s : { &gate, &comp, &gain })
+    for (auto* s : { static_cast<juce::Slider*>(&gate), static_cast<juce::Slider*>(&comp), static_cast<juce::Slider*>(&gain) })
         s->setColour(juce::Slider::textBoxTextColourId, !artwork.isValid() && s == &comp ? juce::Colour(0xffe1e1e1) : dark ? juce::Colour(0xffeeeeee) : juce::Colour(0xff333333));
     for (auto* meter : {&reductionHold, &leftHold, &rightHold})
         meter->setColour(juce::TextButton::textColourOffId, dark ? juce::Colour(0xffeeeeee) : juce::Colour(0xff333333));
@@ -264,7 +264,7 @@ void RvoxxEditor::timerCallback()
 }
 void RvoxxEditor::updateArtworkLayout()
 {
-    for (auto* s : { &gate, &comp, &gain })
+    for (auto* s : { static_cast<juce::Slider*>(&gate), static_cast<juce::Slider*>(&comp), static_cast<juce::Slider*>(&gain) })
         s->setSliderStyle(artwork.isValid() ? juce::Slider::LinearHorizontal : juce::Slider::LinearVertical);
     getConstrainer()->setFixedAspectRatio(475.0 / designHeight());
     setResizeLimits(475, static_cast<int>(designHeight()), 1425, static_cast<int>(designHeight()) * 3);
