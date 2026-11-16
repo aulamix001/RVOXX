@@ -3,6 +3,29 @@
 #include <RvoxxArtwork.h>
 #endif
 
+RvoxxLook::RvoxxLook()
+{
+    setColour(juce::TextButton::textColourOffId, juce::Colour(0xffecd8ae));
+    setColour(juce::TextButton::textColourOnId, juce::Colour(0xffffe4a1));
+    setColour(juce::ToggleButton::textColourId, juce::Colour(0xffecd8ae));
+    setColour(juce::ToggleButton::tickColourId, juce::Colour(0xffe4b75f));
+    setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff30271d));
+    setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff987547));
+    setColour(juce::ComboBox::textColourId, juce::Colour(0xffecd8ae));
+    setColour(juce::Slider::thumbColourId, juce::Colour(0xffc99c51));
+    setColour(juce::Slider::trackColourId, juce::Colour(0xffba843b));
+}
+void RvoxxLook::drawButtonBackground(juce::Graphics& g, juce::Button& button, const juce::Colour&, bool over, bool down)
+{
+    const auto r = button.getLocalBounds().toFloat().reduced(0.7f);
+    const auto top = juce::Colour(down ? 0xff30251a : over ? 0xff775737 : 0xff59452f);
+    g.setGradientFill(juce::ColourGradient(top, 0, r.getY(), juce::Colour(0xff241d16), 0, r.getBottom(), false));
+    g.fillRoundedRectangle(r, 3);
+    g.setColour(juce::Colour(0xffaa8350).withAlpha(button.isEnabled() ? 0.9f : 0.3f));
+    g.drawRoundedRectangle(r, 3, 1);
+    g.setColour(juce::Colour(0xffead4a4).withAlpha(0.2f));
+    g.drawLine(r.getX() + 3, r.getY() + 1.5f, r.getRight() - 3, r.getY() + 1.5f);
+}
 void RvoxxLook::drawLinearSlider(juce::Graphics& g, int x, int y, int width, int height, float pos,
     float min, float max, juce::Slider::SliderStyle style, juce::Slider& slider)
 {
@@ -12,23 +35,27 @@ void RvoxxLook::drawLinearSlider(juce::Graphics& g, int x, int y, int width, int
         return;
     }
     const float cx = static_cast<float>(x) + static_cast<float>(width) * 0.5f;
-    g.setColour(juce::Colour(0xffffad08));
+    g.setColour(juce::Colour(0xffc79b50));
     if (slider.getName() == "Compression")
     {
         g.fillRect(cx - 64, pos - 1.5f, 128.0f, 3.0f);
-        g.setColour(juce::Colour(0xff79252a));
+        g.setGradientFill(juce::ColourGradient(juce::Colour(0xff894333), cx, pos - 17, juce::Colour(0xff3c1a16), cx, pos + 17, false));
         g.fillRoundedRectangle(cx - 40, pos - 17, 80, 34, 17);
-        g.setColour(juce::Colour(0xffffbd1c));
+        g.setColour(juce::Colour(0xffd7b367));
         g.drawRoundedRectangle(cx - 40, pos - 17, 80, 34, 17, 3);
         g.drawRoundedRectangle(cx - 34, pos - 12, 68, 24, 12, 1);
-        g.setColour(juce::Colours::white);
+        g.setColour(juce::Colour(0xffffe5b0));
         g.setFont(18.0f);
         g.drawText(juce::String(slider.getValue(), 1), juce::Rectangle<float>(cx - 33, pos - 11, 66, 22), juce::Justification::centred);
     }
     else
     {
-        g.drawEllipse(cx - 16, pos - 16, 32, 32, 2);
-        g.setColour(juce::Colours::white);
+        g.setColour(juce::Colour(0xff130e0b).withAlpha(0.7f));
+        g.fillEllipse(cx - 17, pos - 15, 34, 34);
+        g.setGradientFill(juce::ColourGradient(juce::Colour(0xffe0be79), cx - 15, pos - 15, juce::Colour(0xff70512b), cx + 15, pos + 15, false));
+        g.fillEllipse(cx - 16, pos - 16, 32, 32);
+        g.setColour(juce::Colour(0xff352618)); g.fillEllipse(cx - 11, pos - 11, 22, 22);
+        g.setColour(juce::Colour(0xffedd4a0));
         g.drawLine(cx - 9, pos, cx + 9, pos, 1);
     }
 }
@@ -95,6 +122,7 @@ RvoxxEditor::RvoxxEditor(RvoxxProcessor& p) : AudioProcessorEditor(p), processor
 #endif
     updateArtworkLayout();
     startTimerHz(30);
+    timerCallback();
 }
 RvoxxEditor::~RvoxxEditor() { stopTimer(); setLookAndFeel(nullptr); }
 void RvoxxEditor::resized()
@@ -110,16 +138,43 @@ void RvoxxEditor::resized()
         reductionHold.setBounds(rect(192, 588, 90, 25)); leftHold.setBounds(rect(345, 588, 60, 25)); rightHold.setBounds(rect(407, 588, 60, 25));
         return;
     }
-    gate.setBounds(rect(31, 112, 88, 239)); comp.setBounds(rect(171, 112, 137, 252)); gain.setBounds(rect(359, 112, 88, 239));
+    gate.setBounds(rect(31, 128, 88, 222)); comp.setBounds(rect(171, 128, 137, 236)); gain.setBounds(rect(359, 128, 88, 222));
     reductionHold.setBounds(rect(195, 369, 88, 26)); leftHold.setBounds(rect(352, 391, 57, 24)); rightHold.setBounds(rect(410, 391, 57, 24));
 }
 void RvoxxEditor::paint(juce::Graphics& g)
 {
     g.addTransform(juce::AffineTransform::scale(getWidth() / 475.0f, getHeight() / designHeight()));
     const bool dark = skin.getSelectedId() == 2;
-    const auto text = dark ? juce::Colour(0xffededed) : juce::Colour(0xff333333);
-    g.fillAll(dark ? juce::Colour(0xff282a2c) : juce::Colour(0xfff4f1e9));
-    g.setColour(text); g.drawRect(1.0f, 1.0f, 473.0f, designHeight() - 2.0f, 1.0f);
+    const auto text = dark ? juce::Colour(0xffe7d5ad) : juce::Colour(0xff493522);
+    g.setGradientFill(juce::ColourGradient(juce::Colour(0xff2c170e), 0, 0, juce::Colour(0xff71472a), 475, designHeight(), false));
+    g.fillRect(0.0f, 0.0f, 475.0f, designHeight());
+    // Deterministic wood grain and brushed metal; no regenerated artwork.
+    for (int i = 0; i < 180; ++i)
+    {
+        const float y = i * 3.9f;
+        g.setColour(juce::Colour(0xff130a06).withAlpha(0.15f + 0.08f * std::sin(i * 1.7f)));
+        juce::Path grain; grain.startNewSubPath(0, y);
+        grain.cubicTo(120, y + std::sin(i * 0.9f) * 6, 310, y - 4, 475, y + 2);
+        g.strokePath(grain, juce::PathStrokeType(0.8f));
+    }
+    const juce::Rectangle<float> face(17, 38, 441, designHeight() - 55);
+    g.setColour(juce::Colour(0xff140e09)); g.fillRoundedRectangle(face.expanded(3), 6);
+    g.setGradientFill(juce::ColourGradient(dark ? juce::Colour(0xff4a4538) : juce::Colour(0xffe1d3b1), 20, 38,
+        dark ? juce::Colour(0xff28271f) : juce::Colour(0xffb7a27b), 450, designHeight(), false));
+    g.fillRoundedRectangle(face, 5);
+    g.setColour(juce::Colour(0xffb28f53)); g.drawRoundedRectangle(face, 5, 1);
+    for (int y = 41; y < static_cast<int>(designHeight()) - 20; y += 3)
+    {
+        g.setColour(juce::Colour(0xff51391d).withAlpha(y % 9 == 0 ? 0.05f : 0.025f));
+        g.drawHorizontalLine(y, 19, 456);
+    }
+    for (const auto pt : {juce::Point<float>(28, 50), juce::Point<float>(447, 50), juce::Point<float>(28, designHeight() - 30), juce::Point<float>(447, designHeight() - 30)})
+    {
+        g.setColour(juce::Colour(0xff25190e)); g.fillEllipse(pt.x - 5, pt.y - 4, 11, 11);
+        g.setGradientFill(juce::ColourGradient(juce::Colour(0xffcfad6c), pt.x - 4, pt.y - 4, juce::Colour(0xff5a4125), pt.x + 4, pt.y + 4, false));
+        g.fillEllipse(pt.x - 4, pt.y - 4, 8, 8);
+        g.setColour(juce::Colour(0xff322316)); g.drawLine(pt.x - 2, pt.y + 2, pt.x + 2, pt.y - 2, 1.4f);
+    }
     const auto label = [&g, text](const juce::String& s, int x, int y, int w, int h, float size)
     { g.setColour(text); g.setFont(size); g.drawText(s, x, y, w, h, juce::Justification::centred); };
     if (artwork.isValid())
@@ -132,31 +187,43 @@ void RvoxxEditor::paint(juce::Graphics& g)
         label("Reduction", 165, 562, 145, 22, 16); label("Output", 320, 562, 145, 22, 16);
         return;
     }
-    label("RVOXX", 180, 48, 120, 33, 28);
-    g.setColour(dark ? juce::Colour(0xff45484a) : juce::Colour(0xffd7d5ce));
-    g.fillRoundedRectangle(136, 98, 207, 305, 54);
-    g.setColour(juce::Colour(0xff001c2e)); g.fillRoundedRectangle(173, 136, 133, 230, 27);
-    g.setColour(juce::Colour(0xff203d4c)); g.fillRoundedRectangle(187, 150, 105, 201, 19);
-    g.setColour(juce::Colour(0xff79252a));
+    g.setColour(text); g.setFont(juce::Font(juce::FontOptions(juce::Font::getDefaultSerifFontName(), 28, juce::Font::bold)));
+    g.drawText("RVOXX", 173, 45, 133, 34, juce::Justification::centred);
+    label("V O C A L   D Y N A M I C S", 145, 80, 189, 13, 9);
+    g.setColour(juce::Colour(0xff2e271e)); g.fillRoundedRectangle(136, 99, 207, 304, 13);
+    g.setColour(juce::Colour(0xffa5844c)); g.drawRoundedRectangle(137, 100, 205, 302, 12, 1.2f);
+    g.setColour(juce::Colour(0xff151b17)); g.fillRoundedRectangle(173, 151, 133, 215, 13);
+    g.setColour(juce::Colour(0xff30392b)); g.fillRoundedRectangle(187, 155, 105, 196, 7);
+    g.setColour(juce::Colour(0xff7b3527));
     const float reductionHeight = juce::jlimit(0.0f, 201.0f, -attenuation / 36.0f * 201.0f);
     g.fillRect(187.0f, 150.0f, 105.0f, reductionHeight);
     for (int n = 6; n <= 36; n += 6)
     {
         const int y = 150 + n * 201 / 36;
-        g.setColour(juce::Colour(0xff536470)); g.drawHorizontalLine(y, 187, 292);
-        label(juce::String(n) + "-", 140, y - 10, 31, 20, 14);
+        g.setColour(juce::Colour(0xff8b8059).withAlpha(0.4f)); g.drawHorizontalLine(y, 187, 292);
+        g.setColour(juce::Colour(0xffdfcba0)); g.setFont(13.0f);
+        g.drawText(juce::String(n) + "-", 140, y - 10, 31, 20, juce::Justification::centred);
     }
     const auto meter = [&g](float x, float y, float w, float h, float db, float low)
     {
-        g.setColour(juce::Colour(0xff00334e)); g.fillRoundedRectangle(x, y, w, h, w * 0.5f);
+        g.setColour(juce::Colour(0xff201f16)); g.fillRoundedRectangle(x, y, w, h, w * 0.3f);
         const float amount = juce::jlimit(0.0f, 1.0f, (db - low) / -low) * h;
-        g.setColour(juce::Colour(0xffffa509)); g.fillRect(x, y + h - amount, w, amount);
+        g.setGradientFill(juce::ColourGradient(juce::Colour(0xfff1d387), x, y, juce::Colour(0xffa06623), x, y + h, false));
+        g.fillRect(x, y + h - amount, w, amount);
     };
     meter(66, 153, 18, 197, energy, -80);
     meter(394, 153, 6, 197, left, -36);
     if (processor.getTotalNumOutputChannels() == 2) meter(404, 153, 6, 197, right, -36);
     for (int n = 12; n <= 72; n += 12) label(juce::String(n) + "-", 29, 147 + n * 197 / 80, 33, 20, 14);
-    label("Gate", 32, 91, 85, 22, 18); label("Comp", 185, 105, 106, 24, 19); label("Gain", 360, 91, 85, 22, 18);
+    label("GATE", 32, 104, 85, 22, 16);
+    g.setColour(juce::Colour(0xffe8d4aa)); g.setFont(16.0f); g.drawText("COMP", 185, 104, 106, 22, juce::Justification::centred);
+    label("GAIN", 360, 104, 85, 22, 16);
+    const bool gateOff = processor.state.getRawParameterValue("gate")->load() <= -79.99f;
+    const bool expanding = processor.gateReduction.load() < -1.0f;
+    g.setColour(juce::Colour(gateOff ? 0xff74664d : expanding ? 0xffb86b2c : 0xff788c3e));
+    g.fillEllipse(44, 419, 5, 5);
+    label(gateOff ? "GATE OFF" : expanding ? "EXPANDING" : "GATE OPEN", 53, 414, 100, 14, 9);
+    label("VINTAGE SERIES", 306, 414, 125, 14, 9);
     label("Energy", 30, 361, 90, 25, 18); label(juce::String(energy, 1), 30, 389, 90, 24, 16);
     label("Output", 358, 361, 92, 25, 18);
     if (!selection.isEmpty())
@@ -178,7 +245,8 @@ void RvoxxEditor::timerCallback()
     rightHold.setVisible(processor.getTotalNumOutputChannels() == 2);
     undo.setEnabled(processor.undo.canUndo()); redo.setEnabled(processor.undo.canRedo());
     const bool dark = skin.getSelectedId() == 2;
-    for (auto* s : { &gate, &comp, &gain }) s->setColour(juce::Slider::textBoxTextColourId, dark ? juce::Colours::white : juce::Colour(0xff303030));
+    for (auto* s : { &gate, &comp, &gain })
+        s->setColour(juce::Slider::textBoxTextColourId, !artwork.isValid() && s == &comp ? juce::Colour(0xffead4a4) : dark ? juce::Colour(0xffead4a4) : juce::Colour(0xff493522));
     repaint();
 }
 void RvoxxEditor::updateArtworkLayout()

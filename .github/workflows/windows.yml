@@ -22,6 +22,8 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist
+          & .\build\Release\rvoxx_processor_tests.exe "$pwd\dist\RVOXX-vintage.png"
+          if ($LASTEXITCODE -ne 0) { throw "Editor rendering check failed" }
           Copy-Item README.md build/RVOXX_artefacts/Release/VST3/README.md
           Compress-Archive -Path build/RVOXX_artefacts/Release/VST3/RVOXX.vst3,build/RVOXX_artefacts/Release/VST3/README.md -DestinationPath dist/RVOXX-Windows-x64.zip
           Compress-Archive -Path build/RVOXX_artefacts/Release/Standalone/RVOXX.exe -DestinationPath dist/RVOXX-Standalone-Windows-x64.zip

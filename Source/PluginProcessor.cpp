@@ -43,7 +43,7 @@ rvoxx::Parameters RvoxxProcessor::readParameters() const
 void RvoxxProcessor::prepareToPlay(double rate, int)
 {
     dynamics.prepare(rate, readParameters());
-    energy = -80; reduction = 0; outL = outR = -160;
+    energy = -80; reduction = 0; gateReduction = 0; outL = outR = -160;
     heldReduction = 0; heldL = heldR = -160;
     setLatencySamples(0);
 }
@@ -53,6 +53,7 @@ void RvoxxProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBu
     if (buffer.getNumSamples() == 0) return;
     const auto meters = dynamics.process(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), buffer.getNumSamples(), readParameters());
     energy.store(meters.energy); reduction.store(meters.reduction);
+    gateReduction.store(meters.gateReduction);
     outL.store(meters.output[0]); outR.store(meters.output[1]);
     holdMin(heldReduction, meters.reduction); holdMax(heldL, meters.output[0]); holdMax(heldR, meters.output[1]);
 }

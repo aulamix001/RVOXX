@@ -24,9 +24,11 @@ O CMake baixa o JUCE na primeira configuração. Também aceita `-DJUCE_PATH=C:/
 - Saída mono/estéreo com pico independente por canal e reset por clique. Processamento estéreo vinculado preserva o balanço.
 - Automação, edição numérica (valores positivos viram negativos), reset com duplo clique, estado da sessão, presets próprios `.rvoxx`, comparação A/B e undo/redo.
 - Link: vincula os movimentos de Compression e Gain durante o arrasto, limitado às faixas de cada parâmetro. Também pode ser ativado arrastando uma seleção sobre os dois controles a partir do fundo do painel.
-- Light/Dark/Legacy: temas vetoriais locais. A aparência é redimensionável e não depende de um bitmap.
+- Light/Dark/Legacy: temas vetoriais locais com gabinete de madeira, metal envelhecido, latão e medidores âmbar. A aparência é redimensionável e não depende de um bitmap. O indicador do gate distingue OFF, abertura e expansão.
 
 Comece pela compressão, ajuste o teto de saída e refine o gate por último, conforme a sequência do manual.
+
+Na versão 0.1.1, OFF do gate usa diretamente o comando de bypass e mantém uma rampa de recuperação de 2 ms. Isso corrige uma falha de precisão em 192 kHz que podia manter a expansão ativa após desabilitá-la. Os testes também verificam reativação e independência do tamanho de bloco.
 
 ## Fidelidade e limites
 

@@ -4,6 +4,8 @@
 class RvoxxLook final : public juce::LookAndFeel_V4
 {
 public:
+    RvoxxLook();
+    void drawButtonBackground(juce::Graphics&, juce::Button&, const juce::Colour&, bool, bool) override;
     void drawLinearSlider(juce::Graphics&, int, int, int, int, float, float, float,
         juce::Slider::SliderStyle, juce::Slider&) override;
 };

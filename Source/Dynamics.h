@@ -8,7 +8,7 @@ namespace rvoxx
 inline float toGain(float db) noexcept { return std::pow(10.0f, db * 0.05f); }
 inline float toDb(float gain) noexcept { return 20.0f * std::log10(std::max(gain, 1.0e-8f)); }
 struct Parameters { float compression = 0, gate = -80, gain = 0, gateRelease = 130; };
-struct Meters { float energy = -80, reduction = 0; std::array<float, 2> output { -160, -160 }; };
+struct Meters { float energy = -80, reduction = 0, gateReduction = 0; std::array<float, 2> output { -160, -160 }; };
 
 // Independent approximation. The supplied manual does not specify detector,
 // ratio, knee, time constants, makeup law, or the original limiter algorithm.
@@ -52,7 +52,10 @@ public:
             }
             envelope = follow(envelope, peak, peak > envelope ? detectorAttack : detectorRelease);
             const float inputDb = toDb(envelope);
-            const float gateTarget = current.gate <= -79.99f ? 0.0f
+            // OFF must use the commanded endpoint. Float threshold smoothing
+            // can settle above -79.99 indefinitely at 192 kHz. Retain the
+            // 2 ms recovery ramp to avoid a discontinuity when disabling.
+            const float gateTarget = target.gate <= -79.99f ? 0.0f
                 : -std::min(80.0f, softAbove(current.gate - inputDb, 6.0f) * 0.75f);
             gateReduction = follow(gateReduction, gateTarget,
                 gateTarget > gateReduction ? gateAttack : gateRelease);
@@ -76,6 +79,7 @@ public:
             }
             meters.energy = std::max(meters.energy, std::max(-80.0f, inputDb));
             meters.reduction = std::min(meters.reduction, gateReduction + compReduction);
+            meters.gateReduction = std::min(meters.gateReduction, gateReduction);
         }
         return meters;
     }

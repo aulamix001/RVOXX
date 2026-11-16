@@ -27,7 +27,7 @@ public:
     rvoxx::Parameters readParameters() const;
     juce::UndoManager undo;
     juce::AudioProcessorValueTreeState state;
-    std::atomic<float> energy { -80 }, reduction { 0 }, outL { -160 }, outR { -160 };
+    std::atomic<float> energy { -80 }, reduction { 0 }, gateReduction { 0 }, outL { -160 }, outR { -160 };
     std::atomic<float> heldReduction { 0 }, heldL { -160 }, heldR { -160 };
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout makeLayout();

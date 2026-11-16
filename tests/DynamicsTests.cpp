@@ -36,6 +36,33 @@ int main()
         auto c = render(0.001f, {-24, -80, 0, 130});
         require(a.back() < b.back() && b.back() < c.back(), "lower compression threshold increases low-level makeup");
     }
+    // Regression: OFF after an enabled gate previously left about 15 dB of
+    // attenuation at 192 kHz. Exercise real parameter transitions and blocks.
+    for (int rate : { 44100, 48000, 96000, 192000 })
+    {
+        for (int block : { 13, 512, 4096 })
+        {
+            rvoxx::Dynamics dsp;
+            const rvoxx::Parameters enabled { 0, -20, 0, 130 };
+            dsp.prepare(rate, enabled);
+            std::vector<float> closed(static_cast<size_t>(rate), 0.00001f);
+            float* ptr = closed.data();
+            dsp.process(&ptr, 1, rate, enabled);
+            require(closed.back() < 0.000001f, "gate is engaged before bypass automation");
+            std::vector<float> bypass(static_cast<size_t>(rate), 0.00001f);
+            const rvoxx::Parameters off { 0, -80, 0, 130 };
+            for (int i = 0; i < rate; i += block)
+            {
+                ptr = bypass.data() + i;
+                dsp.process(&ptr, 1, std::min(block, rate - i), off);
+            }
+            require(std::abs(rvoxx::toDb(bypass.back() / 0.00001f)) < 0.01f, "gate OFF recovers unity at every sample rate and block size");
+            require(bypass.front() < bypass[static_cast<size_t>(rate / 100)], "gate OFF ramps smoothly rather than jumping to unity");
+            ptr = closed.data(); std::fill(closed.begin(), closed.end(), 0.00001f);
+            const auto meter = dsp.process(&ptr, 1, rate, enabled);
+            require(closed.back() < 0.000001f && meter.gateReduction < -10, "gate can be re-enabled after bypass");
+        }
+    }
     for (int block : { 1, 64, 512, 4096 })
     {
         std::vector<float> l(32768), r(32768);
