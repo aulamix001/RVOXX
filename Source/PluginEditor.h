@@ -5,6 +5,7 @@ class RvoxxLook final : public juce::LookAndFeel_V4
 {
 public:
     RvoxxLook();
+    juce::Slider::SliderLayout getSliderLayout(juce::Slider&) override;
     void drawButtonBackground(juce::Graphics&, juce::Button&, const juce::Colour&, bool, bool) override;
     void drawLinearSlider(juce::Graphics&, int, int, int, int, float, float, float,
         juce::Slider::SliderStyle, juce::Slider&) override;
@@ -41,7 +42,7 @@ private:
     juce::MemoryBlock alternate;
     bool alternateActive = false, adjustingLink = false;
     double lastComp = 0;
-    float energy = -80, attenuation = 0, left = -160, right = -160;
+    float energy = -160, attenuation = 0, left = -160, right = -160;
     std::unique_ptr<juce::FileChooser> chooser;
     juce::Point<int> selectionStart;
     juce::Rectangle<int> selection;

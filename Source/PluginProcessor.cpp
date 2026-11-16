@@ -15,7 +15,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout RvoxxProcessor::makeLayout()
     {
         const bool release = juce::String(id) == "gateRelease";
         auto attributes = juce::AudioParameterFloatAttributes().withLabel(release ? "ms" : "dB")
-            .withStringFromValueFunction([release](float v, int) { return !release && v <= -80 ? juce::String("-inf") : juce::String(v, 1); })
+            .withStringFromValueFunction([release](float v, int) { return !release && v <= -79.99f ? juce::String("-Inf") : juce::String(v, 1); })
             .withValueFromStringFunction([release, low](const juce::String& text)
             { if (text.containsIgnoreCase("inf")) return low; const auto v = text.getFloatValue(); return release ? v : -std::abs(v); });
         layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(id, 1), name,
@@ -43,7 +43,7 @@ rvoxx::Parameters RvoxxProcessor::readParameters() const
 void RvoxxProcessor::prepareToPlay(double rate, int)
 {
     dynamics.prepare(rate, readParameters());
-    energy = -80; reduction = 0; gateReduction = 0; outL = outR = -160;
+    energy = -160; reduction = 0; gateReduction = 0; outL = outR = -160;
     heldReduction = 0; heldL = heldR = -160;
     setLatencySamples(0);
 }

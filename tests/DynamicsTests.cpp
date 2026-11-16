@@ -60,7 +60,7 @@ int main()
             require(bypass.front() < bypass[static_cast<size_t>(rate / 100)], "gate OFF ramps smoothly rather than jumping to unity");
             ptr = closed.data(); std::fill(closed.begin(), closed.end(), 0.00001f);
             const auto meter = dsp.process(&ptr, 1, rate, enabled);
-            require(closed.back() < 0.000001f && meter.gateReduction < -10, "gate can be re-enabled after bypass");
+            require(closed.back() < 0.000001f && meter.gateReduction <= 0, "gate can be re-enabled after bypass");
         }
     }
     for (int block : { 1, 64, 512, 4096 })
@@ -101,6 +101,22 @@ int main()
         std::vector<float> x(48000, 0.001f); ptr = x.data();
         const auto meter = dsp.process(&ptr, 1, static_cast<int>(x.size()), { -12, -20, 0, 130 });
         require(meter.reduction < -10 && meter.energy <= 0 && meter.output[0] <= 0, "meters expose gate and compression reduction");
+    }
+    for (int rate : {44100, 48000, 96000, 192000})
+    {
+        for (float threshold : {-80.0f, -78.2f, -30.0f})
+        {
+            rvoxx::Dynamics dsp;
+            rvoxx::Parameters settings {0, threshold, 0, 130}; dsp.prepare(rate, settings);
+            std::vector<float> silence(static_cast<size_t>(rate), 0); auto* data = silence.data();
+            const auto meters = dsp.process(&data, 1, rate, settings);
+            require(meters.reduction == 0 && meters.gateReduction == 0, "silence never lights the reduction bar, including an enabled gate");
+            require(meters.energy <= -159 && meters.output[0] <= -159, "silent input and output are represented as negative infinity");
+        }
+        rvoxx::Dynamics dsp; rvoxx::Parameters settings {0, -30, 0, 130}; dsp.prepare(rate, settings);
+        std::vector<float> noise(static_cast<size_t>(rate), 0.001f); auto* data = noise.data();
+        const auto meters = dsp.process(&data, 1, rate, settings);
+        require(meters.gateReduction < -10 && noise.back() < 0.0003f, "measurable noise still produces real attenuation and a visible reduction");
     }
     std::cout << "PASS: " << checks << " DSP checks\n";
 }

@@ -8,7 +8,7 @@ namespace rvoxx
 inline float toGain(float db) noexcept { return std::pow(10.0f, db * 0.05f); }
 inline float toDb(float gain) noexcept { return 20.0f * std::log10(std::max(gain, 1.0e-8f)); }
 struct Parameters { float compression = 0, gate = -80, gain = 0, gateRelease = 130; };
-struct Meters { float energy = -80, reduction = 0, gateReduction = 0; std::array<float, 2> output { -160, -160 }; };
+struct Meters { float energy = -160, reduction = 0, gateReduction = 0; std::array<float, 2> output { -160, -160 }; };
 
 // Independent approximation. The supplied manual does not specify detector,
 // ratio, knee, time constants, makeup law, or the original limiter algorithm.
@@ -77,9 +77,15 @@ public:
                 data[c][i] = std::clamp(data[c][i] * dynamicsGain * limiterGain * ceiling, -ceiling, ceiling);
                 meters.output[static_cast<size_t>(c)] = std::max(meters.output[static_cast<size_t>(c)], toDb(std::abs(data[c][i])));
             }
-            meters.energy = std::max(meters.energy, std::max(-80.0f, inputDb));
-            meters.reduction = std::min(meters.reduction, gateReduction + compReduction);
-            meters.gateReduction = std::min(meters.gateReduction, gateReduction);
+            meters.energy = std::max(meters.energy, inputDb);
+            // Attenuation of digital silence is not a measurable reduction.
+            // Keep processing the gate below the display floor, but report
+            // reduction only when input is within the -80 dB meter range.
+            if (peak >= 0.0001f)
+            {
+                meters.reduction = std::min(meters.reduction, gateReduction + compReduction);
+                meters.gateReduction = std::min(meters.gateReduction, gateReduction);
+            }
         }
         return meters;
     }

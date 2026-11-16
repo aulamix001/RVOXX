@@ -1,7 +1,9 @@
 RVOXX — prévia para Windows x64, em C++17/JUCE 8.0.12.
 
-- Gate corrigido: OFF agora desativa a expansão também em 192 kHz, com rampa suave e retorno ao ganho unitário. Inclui regressões de automação em quatro taxas e três tamanhos de bloco.
-- Visual vintage com madeira escura, painel de metal envelhecido, controles em latão, medidores âmbar e indicador de estado do gate.
+- Interface clara restaurada: painel cinza, medidores azuis e cursores laranja, conforme a referência original. Sem madeira ou elementos vintage.
+- Corrigida a falsa redução vermelha em silêncio: o DSP continua expandindo normalmente, mas o medidor não interpreta ganho aplicado a silêncio como redução de um sinal mensurável.
+- Gate inicia em −Inf; entrada e saída silenciosas exibem −Inf. O valor de Comp fica dentro do cursor e acompanha automação, sem duplicação de números.
+- Mantida a correção de OFF em 192 kHz. Inclui testes para silêncio, ruído real, automação, valores iniciais e renderização da interface em repouso e com áudio.
 
 - VST3 mono/estéreo, automação, estado da sessão, gate, compressor, limitador, medidores e presets.
 - Baixe `RVOXX-Windows-x64.zip`, extraia e copie a pasta inteira `RVOXX.vst3` para `C:\Program Files\Common Files\VST3\`.
